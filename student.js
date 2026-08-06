@@ -1,8 +1,5 @@
 const express = require("express")
 const router = express.Router()
-
-
-
 const students = {
     1: {
         name: "Trishnanjali Pati",
@@ -46,41 +43,44 @@ const students = {
     }
 };
 function time(req, res, next) {
-    console.log(Date.now())
+    console.log("Time:", Date.now())
     next()
 }
 function method(req, res, next) {
-    console.log(req.method)
+    console.log("Method:", req.method)
     next()
 }
 
 function url(req, res, next) {
-    console.log(req.protocol + '://' + req.get('host') + req.originalUrl)
+    console.log("Original URL:", req.protocol + '://' + req.get('host') + req.originalUrl)
     next()
 
 }
 router.use(time, method, url)
 router.post("/", (req, res) => {
-    students[Date.now()] = { name: req.body.name, branch: req.body.branch, cgpa: req.body.cgpa }
+    if (req.body.name && req.body.branch && req.body.cgpa) {
+        students[Date.now()] = { name: req.body.name, branch: req.body.branch, cgpa: req.body.cgpa }
+        res.status(201).send("done adding")
+    }
+    res.sendStatus(400)
     console.log(students)
-    res.send("done adding")
+
 })
 router.get("/search", (req, res) => {
     const params = req.query
     const student = []
     for (const [key, value] of Object.entries(params)) {
-
-
         const values = (Object.values(students))
 
         values.map((item) => {
-            if (item[key].replace(" ", "").toLowerCase() === value.replace(" ", "").toLowerCase()) {
+            if (item[key].toString().replace(" ", "").toLowerCase() === value.toString().replace(" ", "").toLowerCase()) {
                 student.push(item)
-
+                res.status(200).send(student)
             }
+            res.sendStatus(404)
         })
     }
-    res.send(student)
+
 
 
 })
@@ -92,7 +92,7 @@ router.get("/:id", (req, res) => {
     const student = students[req.params.id];
 
     if (!student) {
-        return res.status(404).send("404");
+        return res.status(404).send("404 \nNot Found");
     }
     const details = `ID- ${req.params.id} 
     Name- ${student["name"]}
@@ -111,7 +111,7 @@ router.delete("/:id", (req, res) => {
     delete students[id]
 
 
-    res.send("deleted successfully")
+    res.status(200).send("deleted successfully")
 })
 
 module.exports = router
